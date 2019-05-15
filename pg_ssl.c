@@ -13,8 +13,8 @@ PG_MODULE_MAGIC;
 
 EXTENSION(sign) {
     long len;
-    int flags = PKCS7_DETACHED | PKCS7_STREAM;
-    char *cert, *data, *str;
+    int flags = PKCS7_TEXT;//PKCS7_DETACHED | PKCS7_STREAM;
+    char *cert, *data, *str, *pstr;
     BIO *in, *out, *tbio;
     X509 *scert;
     EVP_PKEY *skey;
@@ -33,8 +33,10 @@ EXTENSION(sign) {
     if (!(p7 = PKCS7_sign(scert, skey, NULL, in, flags))) ereport(ERROR, (errmsg("!p7")));
     if (!(out = BIO_new(BIO_s_mem()))) ereport(ERROR, (errmsg("!out")));
     if (!(flags & PKCS7_STREAM)) BIO_reset(in);
-    if (!SMIME_write_PKCS7(out, p7, in, flags)) ereport(ERROR, (errmsg("!SMIME_write_PKCS7")));
+//    if (!SMIME_write_PKCS7(out, p7, in, flags)) ereport(ERROR, (errmsg("!SMIME_write_PKCS7")));
+    if (!i2d_PKCS7_bio(out, p7)) ereport(ERROR, (errmsg("!i2d_PKCS7_bio")));
     len = BIO_get_mem_data(out, (char **)&str);
+    pstr = pstrdup(str);
     elog(LOG, "len=%li, str=%s", len, str);
     PKCS7_free(p7);
     X509_free(scert);
@@ -44,6 +46,6 @@ EXTENSION(sign) {
     BIO_free(tbio);
     (void)pfree(cert);
     (void)pfree(data);
-    elog(LOG, "len=%li, str=%s", len, str);
-    PG_RETURN_TEXT_P(cstring_to_text(str));
+//    elog(LOG, "len=%li, str=%s", len, str);
+    PG_RETURN_TEXT_P(cstring_to_text(pstr));
 }
