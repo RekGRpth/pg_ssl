@@ -11,6 +11,23 @@
 
 PG_MODULE_MAGIC;
 
+static inline int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags, const ASN1_ITEM *it) {
+    BIO *b64;
+    int r;
+    b64 = BIO_new(BIO_f_base64());
+    if (b64 == NULL) {
+        ASN1err(ASN1_F_B64_WRITE_ASN1, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    out = BIO_push(b64, out);
+    r = i2d_ASN1_bio_stream(out, val, in, flags, it);
+    (void)BIO_flush(out);
+    BIO_pop(out);
+    BIO_free(b64);
+    return r;
+}
+
 EXTENSION(sign) {
     int flags = PKCS7_TEXT;
     char *cert, *data, *str, *pstr;
@@ -22,8 +39,6 @@ EXTENSION(sign) {
     cert = TextDatumGetCString(PG_GETARG_DATUM(0));
     if (PG_ARGISNULL(1)) ereport(ERROR, (errmsg("data is null!")));
     data = TextDatumGetCString(PG_GETARG_DATUM(1));
-    OpenSSL_add_all_algorithms();
-    ERR_load_crypto_strings();
     if (!(tbio = BIO_new_mem_buf(cert, strlen(cert)))) ereport(ERROR, (errmsg("!tbio")));
     if (!(in = BIO_new_mem_buf(data, strlen(data)))) ereport(ERROR, (errmsg("!in")));
     if (!(scert = PEM_read_bio_X509(tbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!scert")));
@@ -31,9 +46,8 @@ EXTENSION(sign) {
     if (!(skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!skey")));
     if (!(p7 = PKCS7_sign(scert, skey, NULL, in, flags))) ereport(ERROR, (errmsg("!p7")));
     if (!(out = BIO_new(BIO_s_mem()))) ereport(ERROR, (errmsg("!out")));
-    if (!(flags & PKCS7_STREAM)) BIO_reset(in);
-    if (!PEM_write_bio_PKCS7_stream(out, p7, in, flags)) ereport(ERROR, (errmsg("!PEM_write_bio_PKCS7_stream")));
-    (long)BIO_get_mem_data(out, (char **)&str);
+    if (!B64_write_ASN1(out, (ASN1_VALUE *)p7, in, flags, ASN1_ITEM_rptr(PKCS7))) ereport(ERROR, (errmsg("!B64_write_ASN1")));
+    (long)BIO_get_mem_data(out, &str);
     pstr = pstrdup(str);
     PKCS7_free(p7);
     X509_free(scert);
