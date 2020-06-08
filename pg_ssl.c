@@ -30,10 +30,10 @@ EXTENSION(sign) {
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     out2 = BIO_push(b64, out);
     if (!i2d_ASN1_bio_stream(out2, (ASN1_VALUE *)p7, in, flags, ASN1_ITEM_rptr(PKCS7))) ereport(ERROR, (errmsg("!i2d_ASN1_bio_stream")));
-    (void)BIO_flush(out2);
+    BIO_flush(out2);
     BIO_pop(out2);
     BIO_free(b64);
-    (long)BIO_get_mem_data(out, &str);
+    BIO_get_mem_data(out, &str);
     pstr = pstrdup(str);
     PKCS7_free(p7);
     X509_free(scert);
@@ -41,7 +41,7 @@ EXTENSION(sign) {
     BIO_free(in);
     BIO_free(out);
     BIO_free(tbio);
-    (void)pfree(cert);
-    (void)pfree(data);
+    pfree(cert);
+    pfree(data);
     PG_RETURN_TEXT_P(cstring_to_text(pstr));
 }
