@@ -54,7 +54,7 @@ EXTENSION(sign) {
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
         out2 = BIO_push(b64, out);
         if (!i2d_ASN1_bio_stream(out2, (ASN1_VALUE *)p7, in, flags, ASN1_ITEM_rptr(PKCS7))) ereport(ERROR, (errmsg("!i2d_ASN1_bio_stream")));
-        BIO_flush(out2);
+        if (BIO_flush(out2) != 1) ereport(ERROR, (errmsg("!BIO_flush")));
         len = BIO_get_mem_data(out, &str);
         result = cstring_to_text_with_len(str, len);
     }
