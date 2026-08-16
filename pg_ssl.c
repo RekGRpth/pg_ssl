@@ -1,6 +1,7 @@
 #include <postgres.h>
 #include <fmgr.h>
 
+#include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <utils/builtins.h>
 
@@ -26,6 +27,7 @@ EXTENSION(sign) {
     if (!(scert = PEM_read_bio_X509(tbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!scert")));
     BIO_reset(tbio);
     if (!(skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!skey")));
+    OPENSSL_cleanse(cert, strlen(cert));
     if (!(p7 = PKCS7_sign(scert, skey, NULL, in, flags))) ereport(ERROR, (errmsg("!p7")));
     if (!(out = BIO_new(BIO_s_mem()))) ereport(ERROR, (errmsg("!out")));
     if (!(b64 = BIO_new(BIO_f_base64()))) ereport(ERROR, (errmsg("!b64")));
