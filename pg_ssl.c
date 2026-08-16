@@ -10,7 +10,9 @@ PG_MODULE_MAGIC;
 
 EXTENSION(sign) {
     int flags = PKCS7_TEXT;
-    char *cert, *data, *str, *pstr;
+    char *cert, *data, *str;
+    long len;
+    text *result;
     BIO *in, *out, *out2, *tbio, *b64;
     X509 *scert;
     EVP_PKEY *skey;
@@ -33,8 +35,8 @@ EXTENSION(sign) {
     BIO_flush(out2);
     BIO_pop(out2);
     BIO_free(b64);
-    BIO_get_mem_data(out, &str);
-    pstr = pstrdup(str);
+    len = BIO_get_mem_data(out, &str);
+    result = cstring_to_text_with_len(str, len);
     PKCS7_free(p7);
     X509_free(scert);
     EVP_PKEY_free(skey);
@@ -43,5 +45,5 @@ EXTENSION(sign) {
     BIO_free(tbio);
     pfree(cert);
     pfree(data);
-    PG_RETURN_TEXT_P(cstring_to_text(pstr));
+    PG_RETURN_TEXT_P(result);
 }
