@@ -10,7 +10,7 @@
 PG_MODULE_MAGIC;
 
 static void
-sign_cleanup(BIO *in, BIO *out, BIO *tbio, BIO *b64, X509 *scert, EVP_PKEY *skey, PKCS7 *p7, char *cert, char *data)
+sign_cleanup(BIO *in, BIO *out, BIO *cbio, BIO *kbio, BIO *b64, X509 *scert, EVP_PKEY *skey, PKCS7 *p7, char *cert, char *key, char *data)
 {
     if (b64) BIO_free(b64);
     if (out) BIO_free(out);
@@ -18,17 +18,19 @@ sign_cleanup(BIO *in, BIO *out, BIO *tbio, BIO *b64, X509 *scert, EVP_PKEY *skey
     if (scert) X509_free(scert);
     if (skey) EVP_PKEY_free(skey);
     if (in) BIO_free(in);
-    if (tbio) BIO_free(tbio);
+    if (kbio) BIO_free(kbio);
+    if (cbio) BIO_free(cbio);
     if (cert) pfree(cert);
+    if (key) pfree(key);
     if (data) pfree(data);
 }
 
 EXTENSION(sign) {
     int flags = PKCS7_TEXT;
-    char *cert = NULL, *data = NULL, *str;
+    char *cert = NULL, *key = NULL, *data = NULL, *str;
     long len;
     text *result = NULL;
-    BIO *in = NULL, *out = NULL, *out2, *tbio = NULL, *b64 = NULL;
+    BIO *in = NULL, *out = NULL, *out2, *cbio = NULL, *kbio = NULL, *b64 = NULL;
     X509 *scert = NULL;
     EVP_PKEY *skey = NULL;
     PKCS7 *p7 = NULL;
@@ -36,14 +38,16 @@ EXTENSION(sign) {
     {
         if (PG_ARGISNULL(0)) ereport(ERROR, (errmsg("cert is null!")));
         cert = TextDatumGetCString(PG_GETARG_DATUM(0));
-        if (PG_ARGISNULL(1)) ereport(ERROR, (errmsg("data is null!")));
-        data = TextDatumGetCString(PG_GETARG_DATUM(1));
-        if (!(tbio = BIO_new_mem_buf(cert, strlen(cert)))) ereport(ERROR, (errmsg("!tbio")));
+        if (PG_ARGISNULL(1)) ereport(ERROR, (errmsg("key is null!")));
+        key = TextDatumGetCString(PG_GETARG_DATUM(1));
+        if (PG_ARGISNULL(2)) ereport(ERROR, (errmsg("data is null!")));
+        data = TextDatumGetCString(PG_GETARG_DATUM(2));
+        if (!(cbio = BIO_new_mem_buf(cert, strlen(cert)))) ereport(ERROR, (errmsg("!cbio")));
+        if (!(kbio = BIO_new_mem_buf(key, strlen(key)))) ereport(ERROR, (errmsg("!kbio")));
         if (!(in = BIO_new_mem_buf(data, strlen(data)))) ereport(ERROR, (errmsg("!in")));
-        if (!(scert = PEM_read_bio_X509(tbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!scert")));
-        BIO_reset(tbio);
-        if (!(skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!skey")));
-        OPENSSL_cleanse(cert, strlen(cert));
+        if (!(scert = PEM_read_bio_X509(cbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!scert")));
+        if (!(skey = PEM_read_bio_PrivateKey(kbio, NULL, 0, NULL))) ereport(ERROR, (errmsg("!skey")));
+        OPENSSL_cleanse(key, strlen(key));
         if (!(p7 = PKCS7_sign(scert, skey, NULL, in, flags))) ereport(ERROR, (errmsg("!p7")));
         if (!(out = BIO_new(BIO_s_mem()))) ereport(ERROR, (errmsg("!out")));
         if (!(b64 = BIO_new(BIO_f_base64()))) ereport(ERROR, (errmsg("!b64")));
@@ -56,10 +60,10 @@ EXTENSION(sign) {
     }
     PG_CATCH();
     {
-        sign_cleanup(in, out, tbio, b64, scert, skey, p7, cert, data);
+        sign_cleanup(in, out, cbio, kbio, b64, scert, skey, p7, cert, key, data);
         PG_RE_THROW();
     }
     PG_END_TRY();
-    sign_cleanup(in, out, tbio, b64, scert, skey, p7, cert, data);
+    sign_cleanup(in, out, cbio, kbio, b64, scert, skey, p7, cert, key, data);
     PG_RETURN_TEXT_P(result);
 }
