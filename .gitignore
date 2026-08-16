@@ -4,5 +4,11 @@
 *.bc
 .deps/
 
+# pg_regress test run output
+/results/
+/regression.diffs
+/regression.out
+/log/
+
 # Editor
 .vscode/

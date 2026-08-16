@@ -1,0 +1,129 @@
+CREATE EXTENSION pg_ssl;
+-- Fixed long-lived (100y) self-signed test certificate/key pair, embedded
+-- directly so the regression test has no external dependencies. Generated
+-- with:
+--   openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem \
+--       -days 36500 -nodes -subj "/CN=pg_ssl-test"
+CREATE TEMP TABLE fixture AS SELECT
+$$-----BEGIN CERTIFICATE-----
+MIIDDzCCAfegAwIBAgIUPBlVHD37xrRcntRVitSjYpBTyx0wDQYJKoZIhvcNAQEL
+BQAwFjEUMBIGA1UEAwwLcGdfc3NsLXRlc3QwIBcNMjYwODE2MDc0MDIxWhgPMjEy
+NjA3MjMwNzQwMjFaMBYxFDASBgNVBAMMC3BnX3NzbC10ZXN0MIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr8oHnbVWRLwtVPLFXfvFKQ9l8r7pr9HHUzCN
+lwNfRdPLB14SecU3F7iNYUzPqMwXAHysh8vWLqB5BtVfHdAdupFOyP4CUovgB0fJ
+w03VDIlmn0A7IGzsDLVXnz5HlHN6oLVrhExDaOOgq/e6nahpZwbhgLTfAjQxWxIo
+44cWp8RAMHvS3YgqWe/8VXhpa1yWucNYfVee8zxCBCiRkrFnZuAwwP/W/4tnGnxu
+T5CIQp+tjijOFfuW4AL6lVXyUFFQiSbJOVmoL+7VinAtT2qWrzJSbk8wWgccL5m8
+iT++g8fZLkI0/IVxewfkvljwYDU3PI/mMCo7MV7ylbSmWMmEwwIDAQABo1MwUTAd
+BgNVHQ4EFgQU415co1gzrJEBiEcoRz7Oz+hIsvowHwYDVR0jBBgwFoAU415co1gz
+rJEBiEcoRz7Oz+hIsvowDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+AQEAWSjCi4jdTC2QyzLETi5M+hMiYvhb2kp73rqiFyJI0j2BJQOl/g0VVN72DGL/
+d/BzhE3KrwA/izuS/+EhGcg7pBWd3bJlQFmiY756sfBsAuen4Cix7L50SuWEz6yX
+/aM/0QMzD0S1SzxjCOEQ+JIimFNe/TSzyImy1XNf/NdnwfcKuhiSTImq22Uh08Er
+F8biD2P4bSZz9Yi+fSptYmoiqTIwvZS+8JW/QQ+JFLvvgrJvIhICHu2M4DxQ09Fa
+bRMi3qGoj+uDDzTqGX5rTeLYvoT7FerTwFiby4MO7idltpKr3z3ZwEWFHf9AkQ2C
+E0lwywIDTPiaa63deSjWhWs2+w==
+-----END CERTIFICATE-----
+$$::text AS cert,
+$$-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCvygedtVZEvC1U
+8sVd+8UpD2Xyvumv0cdTMI2XA19F08sHXhJ5xTcXuI1hTM+ozBcAfKyHy9YuoHkG
+1V8d0B26kU7I/gJSi+AHR8nDTdUMiWafQDsgbOwMtVefPkeUc3qgtWuETENo46Cr
+97qdqGlnBuGAtN8CNDFbEijjhxanxEAwe9LdiCpZ7/xVeGlrXJa5w1h9V57zPEIE
+KJGSsWdm4DDA/9b/i2cafG5PkIhCn62OKM4V+5bgAvqVVfJQUVCJJsk5Wagv7tWK
+cC1PapavMlJuTzBaBxwvmbyJP76Dx9kuQjT8hXF7B+S+WPBgNTc8j+YwKjsxXvKV
+tKZYyYTDAgMBAAECggEAEinCQrHPYZe96VaSPQU8GGN+aaf/NkrrGPXd01omWG0r
+P64hI5LUf+9yMDkDBdJcmBDJtNhDX5r2FlYql0Z/I91KsirIq6XHNolc2ACtQDfc
+Mh0tXsrSUvfTv2DsfXK3G27TVp6YonhOjCYzEoIprdsAps9JcY1aAipsriGxnhDV
+X9B/VY1I4rrVqz/HKyhu3UcXUqpy0vg59ds1aAz2yfEsivWamoy/iFIOpXb/C78U
+q6ZmiR79aCGWNqWvFkxwRf274htLXbDQxlME1hQApP4YXNFf1D6TWY+kTKhpHmlP
+T2QNNv3ohoEqUK4T6WZPuNLJUUlyFJSRoyu0ekWkvQKBgQDtsmXm2abaykqjTV9C
+7GxNk1fSCrlWbFrcPHvloHwlfG/Qu67ysmGpY1EZ1vAG4nFbgkUb3BrS6S0t7g5Y
+RpAaIAFzoUfMvkZ17xDfN3HZlarGzeMydG4E+t7QDPstvPXA4dFBtZHWnXGx8Jt5
+XgWvmrYVQEPuHA9VTzI/dsY13QKBgQC9U0aXRbHsh28LQzWLoMVMzyqlqlVWhJw3
+VTFqcDMlfVVrmmV+ULQWVDqV8xLZBMMuzZB6sGDeT2A67FqvRD0nuddnLfsUlmqt
+GlmSSoYQ7wIUG5olkbrnc9Pv+JoqZ/NRTT2H45M88OrB3ZWrzgZHhyQUasudjSFB
+rrnp5hKLHwKBgGZmCUI3F4t/xEGvjk9dXJba1+Vzmz5g9Y+VOubEiVb40Y7Bm++P
+60S2tXSFROgiWyVJ7I3A94lOzJjRyjo7Q88NZLK0kyLgAajCsakH0LMkp+p3Pd45
+jD/290/3l6mvkstiPOyq1MX5E8bNWZ0iZR6ubqye/+SvD+f3czUl7OO9AoGAIKBf
+Q+Zw2RAl5Mz6R0u3dJsnAFGwTy6fNTHrSCp5xfYpaFe9Md16i3aMehbfoqKdeE1Y
+nqwSpX0MWlss7ZNW7qeqJU/ZOx0I2Tf3Q6ywGe72bryq/dp1WTmuxmYTO0eauOIU
+vnxLfW8PJcWn62mfz2fMofAdktMlbgpMY7CQdYUCgYEAj51/HNL7JHSXz1AztGKr
+5GxkTcS67apphlo0Md2CsuDyKzWY2ZYPXOr+/Uy3m62B9e57MwR//RtJySpkJFIP
+rjOj/mqe4JXKR2IXT56FxLifyZPc5Y44w15diJbf7QBT51shWHkl+H/yWiBqoBWi
+4ajf/siuGY7YlYAkzRHh3LU=
+-----END PRIVATE KEY-----
+$$::text AS key;
+-- success path: only stable properties are checked, since the PKCS7
+-- signedAttrs embed a signing timestamp, making the raw output
+-- non-reproducible across test runs
+SELECT sign(cert, key, 'hello world') IS NOT NULL AS signed_ok FROM fixture;
+ signed_ok 
+-----------
+ t
+(1 row)
+
+SELECT length(sign(cert, key, 'hello world')) > 0 AS has_content FROM fixture;
+ has_content 
+-------------
+ t
+(1 row)
+
+SELECT sign(cert, key, 'hello world') ~ '^[A-Za-z0-9+/=]+$' AS looks_like_base64 FROM fixture;
+ looks_like_base64 
+-------------------
+ t
+(1 row)
+
+-- null arguments are rejected
+DO $$
+BEGIN
+    PERFORM sign(NULL, (SELECT key FROM fixture), 'x');
+    RAISE EXCEPTION 'expected error for null cert';
+EXCEPTION WHEN null_value_not_allowed THEN
+    RAISE NOTICE 'null cert rejected as expected';
+END $$;
+NOTICE:  null cert rejected as expected
+DO $$
+BEGIN
+    PERFORM sign((SELECT cert FROM fixture), NULL, 'x');
+    RAISE EXCEPTION 'expected error for null key';
+EXCEPTION WHEN null_value_not_allowed THEN
+    RAISE NOTICE 'null key rejected as expected';
+END $$;
+NOTICE:  null key rejected as expected
+DO $$
+BEGIN
+    PERFORM sign((SELECT cert FROM fixture), (SELECT key FROM fixture), NULL);
+    RAISE EXCEPTION 'expected error for null data';
+EXCEPTION WHEN null_value_not_allowed THEN
+    RAISE NOTICE 'null data rejected as expected';
+END $$;
+NOTICE:  null data rejected as expected
+-- malformed cert/key are rejected
+DO $$
+BEGIN
+    PERFORM sign('not a cert', (SELECT key FROM fixture), 'x');
+    RAISE EXCEPTION 'expected error for malformed cert';
+EXCEPTION WHEN invalid_parameter_value THEN
+    RAISE NOTICE 'malformed cert rejected as expected';
+END $$;
+NOTICE:  malformed cert rejected as expected
+DO $$
+BEGIN
+    PERFORM sign((SELECT cert FROM fixture), 'not a key', 'x');
+    RAISE EXCEPTION 'expected error for malformed key';
+EXCEPTION WHEN invalid_parameter_value THEN
+    RAISE NOTICE 'malformed key rejected as expected';
+END $$;
+NOTICE:  malformed key rejected as expected
+-- cert and key swapped: X509 parser rejects a private key PEM as invalid
+DO $$
+BEGIN
+    PERFORM sign((SELECT key FROM fixture), (SELECT cert FROM fixture), 'x');
+    RAISE EXCEPTION 'expected error for swapped cert/key';
+EXCEPTION WHEN invalid_parameter_value THEN
+    RAISE NOTICE 'swapped cert/key rejected as expected';
+END $$;
+NOTICE:  swapped cert/key rejected as expected
+DROP EXTENSION pg_ssl;
